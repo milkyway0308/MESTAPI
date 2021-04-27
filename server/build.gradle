@@ -3,21 +3,3 @@ buildscript {
         jcenter()
     }
 }
-
-plugins {
-    id 'org.jetbrains.kotlin.jvm'
-}
-
-repositories {
-    maven {
-        url 'http://repository.skywolf.kr/releases'
-    }
-}
-
-dependencies {
-    compileOnly("skywolf46:exutil:latest.release")
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = "6.8.1"
-}

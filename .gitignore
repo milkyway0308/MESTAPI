@@ -5,3 +5,5 @@ out/*
 *.iml
 *.xml
 *.jar
+# Project exclude paths
+/build/*

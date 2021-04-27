@@ -3,18 +3,18 @@ package skywolf46.mestapi.test
 import org.junit.Test
 import skywolf46.mestapi.core.MESTAPI
 import skywolf46.mestapi.core.annotations.MESTListener
-import skywolf46.mestapi.core.annotations.MESTProvider
+import skywolf46.mestapi.core.annotations.MESTConstructor
 
 class MESTTest {
     companion object {
-        @MESTProvider
+        @MESTConstructor
         fun providerTest(str: String): Int {
             println("Converting $str to ${str.hashCode()}")
             return str.hashCode()
         }
 
 
-        @MESTProvider
+        @MESTConstructor
         fun providerTestDouble(int: Int): Double {
             println("Converting $int to 20.0")
             return 20.0

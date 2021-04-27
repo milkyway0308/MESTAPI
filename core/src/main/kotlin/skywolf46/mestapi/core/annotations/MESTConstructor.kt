@@ -1,4 +1,5 @@
 package skywolf46.mestapi.core.annotations
 
-annotation class MESTConstructor {
-}
+import skywolf46.mestapi.core.data.MESTPriority
+
+annotation class MESTConstructor(val priority : Int = MESTPriority.MONITORING)

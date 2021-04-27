@@ -1,31 +1,33 @@
 package skywolf46.mestapi.core.reflections
 
-import skywolf46.mestapi.core.annotations.MESTProvider
+import skywolf46.extrautility.util.PriorityReference
+import skywolf46.mestapi.core.annotations.MESTConstructor
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
 
 object MESTProviderStorage {
 
-    val inputMap = mutableMapOf<KClass<*>, MutableList<MethodInvoker>>()
+    internal val inputMap = mutableMapOf<KClass<*>, MutableList<PriorityReference<MethodInvoker>>>()
 //    val outputMap = mutableMapOf<KClass<*>, MethodInvoker>()
 
-    fun get(cls: KClass<*>): List<MethodInvoker>? {
+
+
+    fun get(cls: KClass<*>): List<PriorityReference<MethodInvoker>>? {
         return inputMap[cls]
     }
 
 
     fun set(mtd: Method): Boolean {
-        if (mtd.getAnnotation(MESTProvider::class.java) == null) {
-            return false
-        }
+        var priority = mtd.getAnnotation(MESTConstructor::class.java)?.priority ?: return false
+
         if (mtd.parameterCount != 1) {
-            System.err.println("Cannot parse MESTProvider at Method ${mtd.name} in class ${mtd.javaClass.name} : MESTProvider only accepts 1 parameter")
+            System.err.println("Cannot parse MESTProvider at Method ${mtd.name} in class ${mtd.declaringClass.name} : MESTProvider only accepts 1 parameter")
             return false
         }
 
         if (mtd.returnType.equals(Void.TYPE)) {
-            System.err.println("Cannot parse MESTProvider at Method ${mtd.name} in class ${mtd.javaClass.name} : MESTProvider requires return value")
+            System.err.println("Cannot parse MESTProvider at Method ${mtd.name} in class ${mtd.declaringClass.name} : MESTProvider requires return value")
             return false
         }
         val method: MethodInvoker
@@ -38,7 +40,7 @@ object MESTProviderStorage {
                 if (kotlinCls.isCompanion) {
                     method = MethodInvoker(kotlinCls.objectInstance, mtd)
                 } else {
-                    System.err.println("Cannot parse MESTProvider at Method ${mtd.name} in class ${mtd.javaClass.name} : MESTProvider requires Companion method, object class method, or JVM static method")
+                    System.err.println("Cannot parse MESTProvider at Method ${mtd.name} in class ${mtd.declaringClass.name} : MESTProvider requires Companion method, object class method, or JVM static method")
                     return false
                 }
             }
@@ -46,17 +48,13 @@ object MESTProviderStorage {
             // If static, always allow
             method = MethodInvoker(null, mtd)
         }
-        if (inputMap.containsKey(mtd.parameters[0].type.kotlin)) {
-            System.err.println("Warning: MESTProvider ${mtd.name} in ${mtd.declaringClass.name} overriding provider that receive ${mtd.parameters[0].name} as parameter")
-            return false
+        inputMap.computeIfAbsent(mtd.parameters[0].type.kotlin) {
+            mutableListOf()
+        }.run {
+            add(PriorityReference(method, priority))
+            sort()
+//            println("Sorting: ${map{x -> x.priority}}")
         }
-        inputMap.computeIfAbsent(mtd.parameters[0].type.kotlin) { mutableListOf() }.add(method)
-
-//        if (inputMap.containsKey(mtd.parameters[0].type.kotlin)) {
-//            System.err.println("Warning: MESTProvider ${mtd.name} in ${mtd.declaringClass.name} overriding provider that returns ${mtd.parameters[0].name}")
-//            return false
-//        }
-//        outputMap[mtd.returnType.kotlin] = method
         return true
     }
 
